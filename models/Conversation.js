@@ -15,6 +15,10 @@ const schema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    fileData: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,

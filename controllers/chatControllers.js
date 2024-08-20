@@ -1,5 +1,7 @@
 import { Chat } from "../models/Chat.js";
 import { Conversation } from "../models/Conversation.js";
+import * as XLSX from 'xlsx';
+import fs from 'fs';
 
 export const createChat = async (req, res) => {
   try {
@@ -40,10 +42,30 @@ export const addConversation = async (req, res) => {
         message: "No chat with this id",
       });
 
+    let fileData = null;
+
+    // Process the uploaded file
+    if (req.file) {
+      const fileBuffer = req.file.buffer;
+      const fileExtension = req.file.originalname.split('.').pop();
+
+      if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+        // Process Excel file
+        const workbook = XLSX.read(fileBuffer, { type: "buffer" });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        fileData = XLSX.utils.sheet_to_json(sheet);
+      } else if (fileExtension === 'txt') {
+        // Process text file
+        fileData = fileBuffer.toString();
+      }
+    }
+
     const conversation = await Conversation.create({
       chat: chat._id,
       question: req.body.question,
       answer: req.body.answer,
+      fileData: fileData ? JSON.stringify(fileData) : null, // Save file data as JSON string if present
     });
 
     const updatedChat = await Chat.findByIdAndUpdate(
